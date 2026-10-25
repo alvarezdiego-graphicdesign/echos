@@ -8,11 +8,13 @@
 }
 
 @font-face {
-    font-family: 'JolyDisplay-RegularItalic';
-    src: url('JolyDisplay-RegularItalic.woff2') format('woff2'),
-        url('JolyDisplay-RegularItalic.woff') format('woff');
+    font-family: 'JolyText-Regular';
+    src: url('JolyText-Regular.woff2') format('woff2'),
+        url('JolyText-Regular.woff') format('woff');
     font-weight: normal;
     font-style: normal;
     font-display: swap;
 }
+
+
 
