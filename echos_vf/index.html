@@ -1,384 +1,2621 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+/* ------------------------------------------------------------
+   ÉCHOS
+------------------------------------------------------------ */
 
-  <title>Échos</title>
+:root {
+  --map-width: 400vw;
 
-  <link rel="stylesheet" href="css/reset.css">
-  <link rel="stylesheet" href="css/polices/polices.css">
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="icon" type="image/png" href="favicon.png">
-</head>
+  --columns-per-screen: 12;
+  --total-columns: 48;
 
-<body class="index-body">
+  --map-rows: 315;
 
-  <!--
-    ============================================================
-    INDEX
-    ============================================================ -->
+  /*
+   * ÉCHELLE RESPONSIVE DESKTOP
+   * Référence : 1792 × 1120
+   *
+   * HORIZONTAL :
+   * la typo et les gouttières suivent la largeur de l'écran.
+   *
+   * VERTICAL :
+   * la baseline suit uniquement la hauteur et conserve
+   * exactement 35 lignes par écran sous la marge haute.
+   */
+  /*
+   * TYPOGRAPHIE RESPONSIVE HYBRIDE
+   * ----------------------------------------------------------
+   * Référence : 1792 × 1120
+   *
+   * La typo suit normalement la largeur de l'écran en vw
+   * afin de préserver au maximum les mêmes retours à la ligne.
+   *
+   * Si l'écran devient trop bas, elle est automatiquement
+   * limitée par la baseline pour empêcher tout chevauchement.
+   */
+  --type-size-vw: 1.674107142857vw;
+  --type-leading-ratio: 1.047619047619;
 
-  <div class="intro-scroll">
+  --page-top: 1.785714285714vh;
+  --page-side: 0.558035714286vw;
 
-    <!-- TITRE -->
-    <h1 class="intro-title">[E[EC[ECHOS]OS]S]</h1>
+  --baseline: calc((100vh - var(--page-top)) / 35);
+
+  --type-size: min(
+    var(--type-size-vw),
+    calc(var(--baseline) / var(--type-leading-ratio))
+  );
+
+  --type-leading: calc(
+    var(--type-size) * var(--type-leading-ratio)
+  );
+  --baseline-shift: 0.70em;
+
+  /*
+   * Effets proportionnels au corps typographique.
+   * À 1792 × 1120, ils sont identiques à la version d'origine.
+   */
+  --text-stroke: 0.000597333333em;
+  --hover-blur: 0.07168em;
+
+  --image-shift: 0s vh;
+
+  --grid-gap: var(--page-side);
+
+  --paper: rgb(118, 91, 167);
+/*  --paper: rgb(250, 250, 250); */
+/*  --paper: rgb(230, 230, 230);*/
+
+/*  --ink: rgb(112, 116, 124);*/
+  --ink: rgb(0, 0, 0); 
+/*  --ink: rgb(80, 67, 50); */
+
+/*  --link: rgb(249, 132, 202);*/
+--link: rgb(200, 200, 200);
+}
+
+/* ------------------------------------------------------------
+   PAGE
+------------------------------------------------------------ */
+
+html {
+  margin: 0;
+  padding: 0;
+  scroll-behavior: auto;
+  background: var(--paper);
+  scrollbar-width: none;
+
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--paper);
+  cursor: url("cursor.svg") 60 12, auto;
+}
+
+/* ------------------------------------------------------------
+   MAP
+------------------------------------------------------------ */
+
+.map {
+  box-sizing: border-box;
+
+  width: 400vw;
+  min-height: calc(var(--map-rows) * var(--baseline));
+
+  display: grid;
+  grid-template-columns: repeat(4, 100vw);
+  grid-template-rows: auto;
+
+  margin: 0;
+  padding: 0;
+}
+
+/* ------------------------------------------------------------
+   STRUCTURE HTML
+------------------------------------------------------------ */
+
+.part {
+  box-sizing: border-box;
+  position: relative;
+
+  width: 100vw;
+  min-height: calc(var(--map-rows) * var(--baseline));
+
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-rows: repeat(var(--map-rows), var(--baseline));
+  column-gap: var(--grid-gap);
+  row-gap: 0;
+
+  padding: var(--page-top) var(--page-side);
+
+  /* nécessaire pour que les sticky utilisent .text-scroll */
+  overflow: visible;
+}
+
+.part--1 {
+  grid-column: 1;
+}
+
+.part--2 {
+  grid-column: 2;
+}
+
+.part--3 {
+  grid-column: 3;
+}
+
+.part--4 {
+  grid-column: 4;
+}
+
+.page {
+  grid-column: 1 / -1;
+  grid-row: var(--page-start) / span 35;
+
+  display: none;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-rows: repeat(35, var(--baseline));
+  column-gap: var(--grid-gap);
+  row-gap: 0;
+
+  position: relative;
+  z-index: 3;
+
+  min-width: 0;
+  min-height: 0;
+}
+
+/* ============================================================
+   TEXTE
+   ========================================================= */
+
+/* ------------------------------------------------------------
+   BLOCS DE TEXTE
+------------------------------------------------------------ */
+
+.text-block {
+  box-sizing: border-box;
+  margin: 0;
+
+  grid-column: var(--c) / span var(--w);
+  grid-row: calc(var(--r) - var(--page-start) + 1);
+
+  align-self: start;
+  min-width: 0;
+  position: relative;
+  z-index: 3;
+
+  font-family: JolyText-Regular;
+  font-size: var(--type-size);
+  line-height: var(--type-leading);
+  text-align: left;
+/*  hyphens: auto;*/
+  text-indent: -16.66vw;
+
+  color: var(--ink);
+  -webkit-text-stroke: var(--text-stroke) var(--ink);
+/*  background-color: rgb(250, 250, 250) ;*/
+
+  transform: translateY(calc(-1 * var(--baseline-shift)));
+}
+
+/* ------------------------------------------------------------
+   ANCRES DE PAGES
+------------------------------------------------------------ */
+
+.page-anchor {
+
+  grid-column: 1 / -1;
+
+  grid-row: var(--anchor-row) / span 35;
+
+  align-self: stretch;
+  justify-self: start;
+
+  width: calc(100% + (2 * var(--page-side)));
+  margin-left: calc(-1 * var(--page-side));
+
+  min-width: 0;
+  min-height: 0;
+
+  pointer-events: none;
+  background: transparent;
+
+  scroll-margin-top: var(--page-top);
+  scroll-margin-left: 0;
+}
+
+/* ------------------------------------------------------------
+   HYPERLIENS
+------------------------------------------------------------ */
+
+.text-link,
+.text-link:visited,
+.text-link:active {
+  color: var(--link);
+  background: transparent;
+  text-decoration: none;
+  font-family: JolyText-RegularItalic;
+  -webkit-text-stroke: 0vw var(--ink);
+  
+  transition:
+  filter 0.6s ease,
+  opacity 0.6s ease,
+  text-shadow 0.6s ease;
+}
+
+.text-link:hover {
+  cursor: url("cursor-hover.svg") 12 10 , pointer;
+  color: var(--link);
+  filter: blur(var(--hover-blur));
+opacity: 0.45;
+
+text-shadow:
+  -0.12em 0 var(--ink),
+   0.12em 0 var(--ink);
+  /*filter: blur(1px);
+  -webkit-text-stroke: 0.3vw var(--link);*/
+  /*background: var(--link);
+  -webkit-text-stroke: 0;*/
+}
+
+/* ------------------------------------------------------------
+   PLACEMENT DES BLOCS
+------------------------------------------------------------ */
+
+/*-------------------------------------*/
+/* Partie 1 */
+/*-------------------------------------*/
+
+#block-1-1-01 /*r1-r35*/{
+  --c: 3;
+  --w: 9;
+  --r: 2;
+  text-indent: -8.33vw;
+}
+
+#block-1-1-02 /*r1-r35*/{
+  --c: 5;
+  --w: 4;
+  --r: 5;
+}
+
+#block-1-1-03 /*r1-r35*/{
+  --c: 5;
+  --w: 4;
+  --r: 11;
+}
+
+#block-1-1-04 /*r1-r35*/{
+  --c: 9;
+  --w: 4;
+  --r: 31;
+}
+
+/*-------------------------------------*/
+
+#block-1-2-01 /*r36-r70*/{
+  --c: 10;
+  --w: 3;
+  --r: 37; /* 35 lignes par écran, permet de ne pas être dans l'écran précédent */
+}
+
+#block-1-2-02 /*r36-r70*/{
+  --c: 6;
+  --w: 4;
+  --r: 51;
+  text-indent: 0vw;
+}
+
+#block-1-2-03 /*r36-r70*/{
+  --c: 7;
+  --w: 4;
+  --r: 62;
+  text-indent: -24.99vw;
+
+}
+
+/*-------------------------------------*/
+
+#block-1-3-01 /*r71-r105*/{
+  --c: 7;
+  --w: 4;
+  --r: 84;
+}
+
+/*-------------------------------------*/
+
+#block-1-4-01 /*r106-r140*/{
+  --c: 3;
+  --w: 8;
+  --r: 112;
+}
+
+#block-1-4-02 /*r106-r140*/{
+  --c: 5;
+  --w: 4;
+  --r: 116;
+}
+
+#block-1-4-03 /*r106-r140*/{
+  --c: 7;
+  --w: 4;
+  --r: 129;
+}
+
+/*-------------------------------------*/
+
+#block-1-5-01 /*r141-r175*/{
+  --c: 3;
+  --w: 4;
+  --r: 142;
+}
+
+#block-1-5-02 /*r141-r175*/{
+  --c: 3;
+  --w: 4;
+  --r: 145;
+  text-indent: -8.33vw;
+}
+
+#block-1-5-03 /*r141-r175*/{
+  --c: 4;
+  --w: 3;
+  --r: 152;
+}
+
+#block-1-5-04 /*r141-r175*/{
+  --c: 7;
+  --w: 4;
+  --r: 151;
+}
+
+#block-1-5-05 /*r141-r175*/{
+  --c: 10;
+  --w: 3;
+  --r: 169;
+}
+
+/*-------------------------------------*/
+/* Partie 2 */
+/*-------------------------------------*/
+
+#block-2-1-01 /*r1-r35*/{
+  --c: 3;
+  --w: 7;
+  --r: 3;
+}
+
+#block-2-1-02 /*r1-r35*/{
+  --c: 5;
+  --w: 4;
+  --r: 5;
+}
+
+#block-2-1-03 /*r1-r35*/{
+  --c: 5;
+  --w: 4;
+  --r: 8;
+}
+
+#block-2-1-04 /*r1-r35*/{
+  --c: 5;
+  --w: 4;
+  --r: 11;
+}
+
+#block-2-1-05 /*r1-r35*/{
+  --c: 3;
+  --w: 5;
+  --r: 16;
+}
+
+#block-2-1-06 /*r1-r35*/{
+  --c: 8;
+  --w: 4;
+  --r: 15;
+}
+
+#block-2-1-07 /*r1-r35*/{
+  --c: 10;
+  --w: 3;
+  --r: 30;
+}
+
+/*-------------------------------------*/
+
+#block-2-2-01 /*r36-r70*/{
+  --c: 5;
+  --w: 6;
+  --r: 40;
+}
+
+#block-2-2-02 /*r36-r70*/{
+  --c: 5;
+  --w: 4;
+  --r: 48;
+}
+
+#block-2-2-03 /*r36-r70*/{
+  --c: 3;
+  --w: 6;
+  --r: 55;
+  text-indent: 16.66vw;
+}
+
+#block-2-2-04 /*r36-r70*/{
+  --c: 9;
+  --w: 4;
+  --r: 59;
+}
+
+/*-------------------------------------*/
+
+#block-2-3-01 /*r71-r105*/{
+  --c: 7;
+  --w: 3;
+  --r: 72;
+}
+
+#block-2-3-02 /*r71-r105*/{
+  --c: 4;
+  --w: 3;
+  --r: 80;
+  text-indent: 0;
+}
+
+#block-2-3-03 /*r71-r105*/{
+  --c: 4;
+  --w: 3;
+  --r: 88;
+}
+
+#block-2-3-04 /*r71-r105*/{
+  --c: 3;
+  --w: 4;
+  --r: 96;
+}
+
+/*-------------------------------------*/
+
+#block-2-4-01 /*r106-r140*/{
+  --c: 9;
+  --w: 4;
+  --r: 107;
+}
+
+#block-2-4-02 /*r106-r140*/{
+  --c: 9;
+  --w: 4;
+  --r: 109;
+}
+
+/*-------------------------------------*/
+
+#block-2-5-01 /*r141-r175*/{
+  --c: 9;
+  --w: 4;
+  --r: 168  ;
+}
+
+/*-------------------------------------*/
+
+#block-2-6-01 /*r176-r210*/{
+  --c: 3;
+  --w: 4;
+  --r: 191;
+}
+
+#block-2-6-02 /*r176-r210*/{
+  --c: 3;
+  --w: 4;
+  --r: 202;
+}
+
+#block-2-6-03 /*r176-r210*/{
+  --c: 7;
+  --w: 3;
+  --r: 200;
+}
+
+#block-2-6-04 /*r176-r210*/{
+  --c: 9;
+  --w: 3;
+  --r: 206;
+}
+
+/*-------------------------------------*/
+/* Partie 3 */
+/*-------------------------------------*/
+
+#block-3-1-01 /*r1-r35*/{
+  --c: 3;
+  --w: 4;
+  --r: 3;
+}
+
+#block-3-1-02 /*r1-r35*/{
+  --c: 5;
+  --w: 6;
+  --r: 33;
+}
+
+/*-------------------------------------*/
+
+#block-3-2-01 /*r36-r70*/{
+  --c: 3;
+  --w: 4;
+  --r: 40;
+}
+
+#block-3-2-02 /*r36-r70*/{
+  --c: 7;
+  --w: 5;
+  --r: 48;
+}
+
+/*-------------------------------------*/
+
+#block-3-3-01 /*r71-r105*/{
+  --c: 3;
+  --w: 4;
+  --r: 73;
+}
+
+#block-3-3-02 /*r71-r105*/{
+  --c: 7;
+  --w: 4;
+  --r: 72;
+}
+
+#block-3-3-03 /*r71-r105*/{
+  --c: 5;
+  --w: 6;
+  --r: 79;
+}
+
+/*-------------------------------------*/
+
+#block-3-4-01 /*r106-r140*/{
+  --c: 9;
+  --w: 4;
+  --r: 109;
+}
+
+#block-3-4-02 /*r106-r140*/{
+  --c: 5;
+  --w: 4;
+  --r: 114;
+}
+
+#block-3-4-03 /*r106-r140*/{
+  --c: 9;
+  --w: 4;
+  --r: 124 ;
+}
+
+/*-------------------------------------*/
+
+#block-3-5-01 /*r141-r175*/{
+  --c: 4;
+  --w: 3;
+  --r: 142;
+}
+
+#block-3-5-02 /*r141-r175*/{
+  --c: 7;
+  --w: 5;
+  --r: 149;
+}
+
+/*-------------------------------------*/
+
+#block-3-6-01 /*r176-r210*/{
+  --c: 3;
+  --w: 4;
+  --r: 206;
+}
+
+/*-------------------------------------*/
+
+#block-3-7-01 /*r211-r245*/{
+  --c: 9;
+  --w: 4;
+  --r: 212;
+}
+
+#block-3-7-02 /*r211-r245*/{
+  --c: 9;
+  --w: 4;
+  --r: 215;
+}
+
+#block-3-7-03 /*r211-r245*/{
+  --c: 9;
+  --w: 4;
+  --r: 242;
+}
+
+/*-------------------------------------*/
+
+#block-3-8-01 /*r246-r280*/{
+  --c: 4;
+  --w: 3;
+  --r: 247;
+  text-indent: -24.99vw;
+}
+
+/*-------------------------------------*/
+
+#block-3-9-01 /*r281-r315*/{
+  --c: 7;
+  --w: 4;
+  --r: 298;
+}
+
+#block-3-9-02 /*r281-r315*/{
+  --c: 3;
+  --w: 4;
+  --r: 300;
+}
+
+#block-3-9-03 /*r281-r315*/{
+  --c: 7;
+  --w: 4;
+  --r: 307;
+}
+
+/*-------------------------------------*/
+/* Partie 4 */
+/*-------------------------------------*/
+
+#block-4-1-01 /*r1-r35*/{
+  --c: 4;
+  --w: 6;
+  --r: 14;
+  text-indent: -24.99vw;
+}
+
+/*-------------------------------------*/
+
+#block-4-2-01 /*r36-r70*/{
+  --c: 7;
+  --w: 6;
+  --r: 38;
+}
+
+#block-4-2-02 /*r36-r70*/{
+  --c: 9;
+  --w: 4;
+  --r: 41;
+}
+
+/*-------------------------------------*/
+
+#block-4-3-01 /*r71-r105*/{
+  --c: 7;
+  --w: 5;
+  --r: 72;
+}
+
+#block-4-3-02 /*r71-r105*/{
+  --c: 3;
+  --w: 4;
+  --r: 78;
+}
+
+#block-4-3-03 /*r71-r105*/{
+  --c: 3;
+  --w: 4;
+  --r: 90;
+}
+
+/*-------------------------------------*/
+
+#block-4-4-01 /*r106-r140*/{
+  --c: 7;
+  --w: 6;
+  --r: 110;
+}
+
+#block-4-4-02 /*r106-r140*/{
+  --c: 4;
+  --w: 3;
+  --r: 116;
+}
+
+/* ============================================================
+   SCROLL PRINCIPAL
+   ============================================================ */
+
+.text-scroll {
+  position: fixed;
+  inset: 0;
+
+  width: 100vw;
+  height: 100vh;
+
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-x: none;
+
+  background: var(--paper);
+
+  scrollbar-width: none;
+}
+
+.text-scroll::-webkit-scrollbar {
+  display: none;
+}
 
 
-    <!-- GRANDE GRILLE SCROLLABLE -->
-    <main class="intro-map" aria-label="Introduction à Échos">
+/* ============================================================
+   IMAGES : UN SEUL SCROLL PARTAGÉ AVEC LE TEXTE
+   ============================================================ */
+
+.images-scroll-zone,
+.images-scroll-grid {
+  display: contents;
+}
+
+/* ============================================================
+   CHAQUE IMAGE
+   ============================================================
+
+   --c
+      colonne de départ
+
+   --w
+      largeur en colonnes
+
+   --r
+      ligne où commence la longue div de l'image.
+      C'est aussi sa position de départ.
+
+   --end-r
+      ligne où finit la longue div.
+      Quand la fin de cette div est atteinte, l'image cesse
+      d'être sticky et reprend son déplacement.
+
+   --sticky-line
+      ligne de l'écran où l'image s'arrête temporairement.
+      1  = tout en haut de la grille
+      18 = environ le milieu
+      35 = bas de l'écran
+
+   La LONGUEUR de la div est donc :
+   --end-r moins --r.
+
+   Exemple :
+   --r: 5;
+   --end-r: 80;
+
+   => la div s'étend de la ligne 5 à la ligne 80.
+   ============================================================ */
+
+.image-track {
+  grid-column: var(--c) / span var(--w);
+  grid-row: var(--r) / var(--end-r);
+
+  align-self: stretch;
+  position: relative;
+  z-index: 2;
+
+  min-width: 0;
+  min-height: 0;
+
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------
+   IMAGES STATIQUES
+------------------------------------------------------------ */
+
+.image-static {
+  grid-column: var(--c) / span var(--w);
+  grid-row: var(--r);
+
+  align-self: start;
+  position: relative;
+  z-index: 3;
+
+  min-width: 0;
+  min-height: 0;
+
+  pointer-events: none;
+  user-select: none;
+}
 
 
-      <!-- ====================================================
-           IMAGES
-           ==================================================== -->
+.image-block {
+  --image-color: var(--link);
 
-      <!-- IMAGE 1 — RÊVERIES -->
-      <div
-        class="intro-image-track intro-image-track--1"
-        style="
-          --c: 1;
-          --w: 2;
-          --r: 39;
-          --end-r: 119;
-          --sticky-line: 14;
+  box-sizing: border-box;
+  position: relative;
 
-          --image-bg: var(--ink);
-          --image-color: var(--paper);
+  width: 100%;
+  min-width: 0;
 
-          --image-bg-hover: var(--link);
-          --image-color-hover: var(--paper);
+  pointer-events: none;
+  user-select: none;
 
-          --image-mask: url('../images/echos_links_modified060.png');
-        "
-      >
-        <a class="intro-image-link" href="content.html#part1-p1">
-          <div class="intro-image-block">
-            <img
-              class="intro-image-ratio"
-              src="images/echos_links_modified060.png"
-              alt="Rêveries"
-            >
-          </div>
-        </a>
-      </div>
+  transform: translateY(calc(-1 * var(--image-shift)));
+}
 
+.image-ratio {
+  display: block;
+  width: 100%;
+  height: auto;
+  visibility: hidden;
+}
 
-      <!-- IMAGE 2 — MIRAGE -->
-      <div
-        class="intro-image-track intro-image-track--2"
-        style="
-          --c: 4;
-          --w: 2;
-          --r: 39;
-          --end-r: 119;
-          --sticky-line: 14;
+.image-block::after {
+  content: "";
+  position: absolute;
+  inset: 0;
 
-          --image-bg: var(--ink);
-          --image-color: var(--paper);
+  background: var(--image-color);
+  opacity: 0.7;
 
-          --image-bg-hover: var(--link);
-          --image-color-hover: var(--paper);
+  -webkit-mask-image: var(--image-mask);
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
 
-          --image-mask: url('../images/echos_links_modified061.png');
-        "
-      >
-        <a class="intro-image-link" href="content.html#part2-p1">
-          <div class="intro-image-block">
-            <img
-              class="intro-image-ratio"
-              src="images/echos_links_modified061.png"
-              alt="Mirage"
-            >
-          </div>
-        </a>
-      </div>
+  mask-image: var(--image-mask);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+}
 
 
-      <!-- IMAGE 3 — CHIMÈRES -->
-      <div
-        class="intro-image-track intro-image-track--3"
-        style="
-          --c: 8;
-          --w: 2;
-          --r: 39;
-          --end-r: 119;
-          --sticky-line: 14;
+/* ============================================================
+   AFFICHAGE DU TEXTE
+   ============================================================
 
-          --image-bg: var(--ink);
-          --image-color: var(--paper);
+   - toutes les pages de texte sont masquées par défaut ;
+   - seule la page correspondant au :target est affichée ;
+   - cette page est fixe et ne bouge jamais avec la molette ;
+   - les liens restent cliquables ;
+   - les images scrollables continuent de défiler derrière le texte.
+   ============================================================ */
 
-          --image-bg-hover: var(--link);
-          --image-color-hover: var(--paper);
+/*
+ * Page active après un clic sur un lien.
+ *
+ * Le HTML est volontairement :
+ *   .page-anchor:target
+ *   + .page
+ *
+ * donc aucun JavaScript n'est nécessaire.
+ */
+.text-scroll
+.page-anchor:target + .page,
 
-          --image-mask: url('../images/echos_links_modified062.png');
-        "
-      >
-        <a class="intro-image-link" href="content.html#part3-p1">
-          <div class="intro-image-block">
-            <img
-              class="intro-image-ratio"
-              src="images/echos_links_modified062.png"
-              alt="Chimères"
-            >
-          </div>
-        </a>
-      </div>
+/*
+ * Au premier chargement il n'y a encore aucun :target.
+ * On affiche donc part1-p1 par défaut.
+ */
+body:not(:has(.page-anchor:target))
+.text-scroll
+.page--1-1 {
+  display: grid;
+
+  position: fixed;
+  inset: 0;
+
+  box-sizing: border-box;
+  width: 100vw;
+  height: 100vh;
+
+  /* Même grille visuelle que .part. */
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-rows: repeat(35, var(--baseline));
+  column-gap: var(--grid-gap);
+  row-gap: 0;
+
+  padding: var(--page-top) var(--page-side);
+
+  z-index: 3;
+
+  /*
+   * Toute la couche texte laisse passer la molette.
+   * Seuls les liens redeviennent interactifs plus bas.
+   */
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------
+   IMAGES STATIQUES — MÊME PLAN QUE LE TEXTE
+   ------------------------------------------------------------ */
+
+/*
+ * Toutes les couches statiques sont masquées par défaut.
+ * Une seule partie est rendue visible selon le :target courant.
+ */
+.text-scroll
+.static-images-layer {
+  display: none;
+
+  position: fixed;
+  inset: 0;
+
+  box-sizing: border-box;
+  width: 100vw;
+  height: 100vh;
+
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-rows: repeat(35, var(--baseline));
+  column-gap: var(--grid-gap);
+  row-gap: 0;
+
+  padding: var(--page-top) var(--page-side);
+
+  overflow: hidden;
+  pointer-events: none;
+
+  z-index: 3;
+}
+
+/*
+ * Une image statique utilise toujours son --r GLOBAL.
+ * On la place sur la première ligne de la couche puis on la décale
+ * du nombre de baselines séparant --r du début de la page active.
+ *
+ * r=40 + page active démarrant à 36 :
+ * translateY = 4 baselines.
+ *
+ * Si l'image appartient à une autre page, elle se retrouve au-dessus
+ * ou sous le viewport et overflow:hidden la masque automatiquement.
+ */
+.text-scroll
+.static-images-layer
+.image-static {
+  grid-column: var(--c) / span var(--w);
+  grid-row: 1;
+
+  align-self: start;
+
+  transform: translateY(
+    calc((var(--r) - var(--active-page-start)) * var(--baseline))
+  );
+
+  pointer-events: none;
+}
+
+/*
+ * Les images statiques ne sont JAMAIS sticky en fonctionnement actuel.
+ * Leur image intérieure reste simplement relative à la couche fixe.
+ */
+.text-scroll
+.static-images-layer
+.image-static > .image-block {
+  position: relative;
+  top: auto;
+}
+
+/* ------------------------------------------------------------
+   PAGE ACTIVE -> POSITION DES IMAGES STATIQUES
+   ------------------------------------------------------------ */
+
+/*
+ * État initial : avant le premier clic, part1-p1 est la page visible.
+ */
+body:not(:has(.page-anchor:target))
+.text-scroll
+.part--1
+.static-images-layer {
+  display: grid;
+  --active-page-start: 1;
+}
+
+.text-scroll
+.part--1:has(#part1-p1:target)
+.static-images-layer {
+  display: grid;
+  --active-page-start: 1;
+}
+
+.text-scroll
+.part--1:has(#part1-p2:target)
+.static-images-layer {
+  display: grid;
+  --active-page-start: 36;
+}
+
+.text-scroll
+.part--1:has(#part1-p3:target)
+.static-images-layer {
+  display: grid;
+  --active-page-start: 71;
+}
+
+.text-scroll
+.part--1:has(#part1-p4:target)
+.static-images-layer {
+  display: grid;
+  --active-page-start: 106;
+}
+
+.text-scroll
+.part--1:has(#part1-p5:target)
+.static-images-layer {
+  display: grid;
+  --active-page-start: 141;
+}
+
+.text-scroll
+.part--2:has(#part2-p1:target)
+.static-images-layer {
+  display: grid;
+  --active-page-start: 1;
+}
+
+.text-scroll
+.part--2:has(#part2-p2:target)
+.static-images-layer {
+  display: grid;
+  --active-page-start: 36;
+}
+
+.text-scroll
+.part--2:has(#part2-p3:target)
+.static-images-layer {
+  display: grid;
+  --active-page-start: 71;
+}
+
+.text-scroll
+.part--2:has(#part2-p4:target)
+.static-images-layer {
+  display: grid;
+  --active-page-start: 106;
+}
+
+.text-scroll
+.part--2:has(#part2-p5:target)
+.static-images-layer {
+  display: grid;
+  --active-page-start: 141;
+}
+
+.text-scroll
+.part--2:has(#part2-p6:target)
+.static-images-layer {
+  display: grid;
+  --active-page-start: 176;
+}
+
+.text-scroll
+.part--3:has(#part3-p1:target)
+.static-images-layer {
+  display: grid;
+  --active-page-start: 1;
+}
+
+.text-scroll
+.part--3:has(#part3-p2:target)
+.static-images-layer {
+  display: grid;
+  --active-page-start: 36;
+}
+
+.text-scroll
+.part--3:has(#part3-p3:target)
+.static-images-layer {
+  display: grid;
+  --active-page-start: 71;
+}
+
+.text-scroll
+.part--3:has(#part3-p4:target)
+.static-images-layer {
+  display: grid;
+  --active-page-start: 106;
+}
+
+.text-scroll
+.part--3:has(#part3-p5:target)
+.static-images-layer {
+  display: grid;
+  --active-page-start: 141;
+}
+
+.text-scroll
+.part--3:has(#part3-p6:target)
+.static-images-layer {
+  display: grid;
+  --active-page-start: 176;
+}
+
+.text-scroll
+.part--3:has(#part3-p7:target)
+.static-images-layer {
+  display: grid;
+  --active-page-start: 211;
+}
+
+.text-scroll
+.part--3:has(#part3-p8:target)
+.static-images-layer {
+  display: grid;
+  --active-page-start: 246;
+}
+
+.text-scroll
+.part--3:has(#part3-p9:target)
+.static-images-layer {
+  display: grid;
+  --active-page-start: 281;
+}
+
+.text-scroll
+.part--4:has(#part4-p1:target)
+.static-images-layer {
+  display: grid;
+  --active-page-start: 1;
+}
+
+.text-scroll
+.part--4:has(#part4-p2:target)
+.static-images-layer {
+  display: grid;
+  --active-page-start: 36;
+}
+
+.text-scroll
+.part--4:has(#part4-p3:target)
+.static-images-layer {
+  display: grid;
+  --active-page-start: 71;
+}
+
+.text-scroll
+.part--4:has(#part4-p4:target)
+.static-images-layer {
+  display: grid;
+  --active-page-start: 106;
+}
+
+/* Les blocs eux-mêmes ne captent pas la souris. */
+.text-scroll .text-block {
+  position: relative;
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* Les liens restent cliquables au-dessus des images. */
+.text-scroll .text-link {
+  position: relative;
+  z-index: 4;
+  pointer-events: auto;
+}
 
 
-      <!-- IMAGE 4 — EXTASE -->
-      <div
-        class="intro-image-track intro-image-track--4"
-        style="
-          --c: 11;
-          --w: 2;
-          --r: 39;
-          --end-r: 119;
-          --sticky-line: 14;
+/* ------------------------------------------------------------
+   IMAGES SCROLLABLES
+------------------------------------------------------------ */
 
-          --image-bg: var(--ink);
-          --image-color: var(--paper);
+/*
+ * IMAGE SCROLLABLE
+ * ----------------
+ * Elle appartient au scroll principal.
+ * Elle se bloque à --sticky-line, puis repart à la fin de --end-r.
+ */
+.text-scroll .image-track > .image-block {
+  position: sticky;
 
-          --image-bg-hover: var(--link);
-          --image-color-hover: var(--paper);
-
-          --image-mask: url('../images/echos_links_modified063.png');
-        "
-      >
-        <a class="intro-image-link" href="content.html#part4-p1">
-          <div class="intro-image-block">
-            <img
-              class="intro-image-ratio"
-              src="images/echos_links_modified063.png"
-              alt="Extase"
-            >
-          </div>
-        </a>
-      </div>
-
-      <!-- ====================================================
-           TEXTES DES PARTIES — TRACKS STICKY
-           ==================================================== -->
-
-      <!-- RÊVERIES — description -->
-      <div
-        class="intro-text-track"
-        style="
-          --c: 3;
-          --w: 3;
-          --r: 39;
-          --end-r: 123;
-          --sticky-line: 23;
-        "
-      >
-        <p class="intro-part-text intro-part-1-text">
-          Dans les tréfonds du&nbsp;silence, Une lueur vacillante annonce le&nbsp;réveil des ombres et&nbsp;des mystères qui agitent les profondeurs.
-        </p>
-      </div>
-
-      <!-- RÊVERIES — titre -->
-      <div
-        class="intro-text-track"
-        style="
-          --c: 1;
-          --w: 2;
-          --r: 39;
-          --end-r: 123;
-          --sticky-line: 25;
-        "
-      >
-        <p class="intro-part-title intro-part-1-title">
-          RÊVERIES
-        </p>
-      </div>
+  top: calc(
+    var(--page-top) + (var(--sticky-line) - 1) * var(--baseline)
+  );
+}
 
 
-      <!-- MIRAGE — description -->
-      <div
-        class="intro-text-track"
-        style="
-          --c: 6;
-          --w: 3;
-          --r: 39;
-          --end-r: 124;
-          --sticky-line: 23;
-        "
-      >
-        <p class="intro-part-text intro-part-2-text">
-          Entre les murs de&nbsp;pierre, une flamme vacillante danse, éclairant
-          le&nbsp;chemin vers l’énigme des ténèbres et&nbsp;les incertitudes de&nbsp;l’âme.
-        </p>
-      </div>
+/* ============================================================
+   PLACEMENT + COULEUR + PARCOURS DES IMAGES
+   ============================================================
 
-      <!-- MIRAGE — titre -->
-      <div
-        class="intro-text-track"
-        style="
-          --c: 4;
-          --w: 2;
-          --r: 39;
-          --end-r: 123;
-          --sticky-line: 25;
-        "
-      >
-        <p class="intro-part-title intro-part-2-title">
-          MIRAGE
-        </p>
-      </div>
+   Il n'y a plus aucune valeur vh à régler ici.
+
+   Pour chaque image :
+   --c           = colonne
+   --w           = largeur
+   --r           = début de sa div / départ
+   --end-r       = fin de sa div / moment où elle repart
+   --sticky-line = ligne où elle se bloque
+   ============================================================ */
+
+/* PARTIE 1 */
+
+/* ============================================================
+   IMAGES 001–008 — VALEURS D'ORIGINE CONSERVÉES
+   ============================================================ */
+
+.image-001 {
+  /* STATIC */ 
+  --c: 4;
+  --w: 2;
+  --r: 48;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified001.png");
+}
+
+.image-002 {
+  /* SCROLL */ 
+  --c: 10;
+  --w: 3;
+
+  --r: 10;
+  --end-r: 93;
+  --sticky-line: 3;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified002.png");
+}
+
+.image-003 {
+  /* SCROLL */ 
+  --c: 8;
+  --w: 2;
+
+  --r: 37;
+  --end-r: 107;
+  --sticky-line: 16;
+
+  --image-color: var(--link);
+  --image-mask: url("../images/echos_links_modified003.png");
+}
+
+.image-004 {
+  /* SCROLL */ 
+  --c: 1;
+  --w: 3;
+
+  --r: 50;
+  --end-r: 200;
+  --sticky-line: 19;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified004.png");
+}
+
+.image-005 {
+  /* STATIC */ 
+  --c: 4;
+  --w: 3;
+  --r: 84;
+
+  --image-color: var(--link);
+  --image-mask: url("../images/echos_links_modified005.png");
+}
+
+.image-006 {
+  /* STATIC */  
+  --c: 4;
+  --w: 3;
+  --r: 84;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified006.png");
+}
+
+.image-007 {
+  /* STATIC */
+  --c: 1;
+  --w: 4;
+  --r: 112;
+
+  --image-color: var(--link);
+  --image-mask: url("../images/echos_links_modified007.png");
+}
+
+.image-008 {
+  /* SCROLL */
+  --c: 9;
+  --w: 2;
+
+  --r: 114;
+  --end-r: 219;
+  --sticky-line: 16;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified008.png");
+}
+
+/* ============================================================
+   IMAGES 009–059 — GRILLE RÉGULIÈRE
+   ============================================================
+
+   - 2 colonnes de large par image
+   - 6 images maximum par ligne
+   - colonnes : 1 / 3 / 5 / 7 / 9 / 11
+   - lignes : 1 / 15 / 29
+   - une nouvelle ligne toutes les 14 lignes de base
+
+   HTML :
+   .image-track  = scrollable
+   .image-static = non scrollable
+
+   Les images scrollables générées ici utilisent :
+   --end-r: 316;
+   --sticky-line: 1;
+
+   Tu peux ensuite modifier ces valeurs image par image.
+   ============================================================ */
+
+/* ---------------- PARTIE 1 ---------------- */
+
+.image-009 {
+  /* SCROLL */
+  --c: 1;
+  --w: 3;
+  --r: 152;
+  --end-r: 200;
+  --sticky-line: 19;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified009.png");
+}
+
+.image-010 {
+  /* SCROLL */
+  --c: 8;
+  --w: 2;
+  --r: 23;
+  --end-r: 99;
+  --sticky-line: 3;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified010.png");
+}
+
+.image-011 {
+  /* STATIC */
+  --c: 5;
+  --w: 2;
+  --r: 316;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified011.png");
+}
+
+.image-012 {
+  /* STATIC */
+  --c: 7;
+  --w: 2;
+  --r: 316;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified012.png");
+}
+
+.image-013 {
+  /* STATIC */
+  --c: 8;
+  --w: 2;
+  --r: 158;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified013.png");
+}
+
+.image-014 {
+  /* STATIC */
+  --c: 7;
+  --w: 1;
+  --r: 143;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified014.png");
+}
+
+.image-015 {
+  /* SCROLL */
+  --c: 1;
+  --w: 2;
+  --r: 15;
+  --end-r: 316;
+  --sticky-line: 2;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified015.png");
+}
+
+/* ---------------- PARTIE 2 ---------------- */
+
+.image-016 {
+  /* STATIC */
+  --c: 1;
+  --w: 3;
+  --r: 75;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified016.png");
+}
+
+.image-017 {
+  /* SCROLL */
+  --c: 3;
+  --w: 2;
+  --r: 142;
+  --end-r: 316;
+  --sticky-line: 22;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified017.png");
+}
+
+.image-018 {
+  /* SCROLL */
+  --c: 5;
+  --w: 2;
+  --r: 109;
+  --end-r: 316;
+  --sticky-line: 1;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified018.png");
+}
+
+.image-019 {
+  /* STATIC */
+  --c: 5;
+  --w: 2;
+  --r: 142;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified019.png");
+}
+
+.image-020 {
+  /* SCROLL */
+  --c: 10;
+  --w: 3;
+  --r: 194;
+  --end-r: 316;
+  --sticky-line: 1;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified020.png");
+}
+
+.image-021 {
+  /* STATIC */
+  --c: 7;
+  --w: 3;
+  --r: 185;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified021.png");
+}
+
+.image-022 {
+  /* STATIC */
+  --c: 9;
+  --w: 3;
+  --r: 38;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified022.png");
+}
+
+.image-023 {
+  /* STATIC */
+  --c: 3;
+  --w: 2;
+  --r: 15;
+  --end-r: 36;
+  --sticky-line: 15;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified023.png");
+}
+
+.image-024 {
+  /* SCROLL */
+  --c: 10;
+  --w: 3;
+  --r: 111;
+  --end-r: 280;
+  --sticky-line: 1;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified024.png");
+}
+
+.image-025 {
+  /* STATIC */
+  --c: 1;
+  --w: 2;
+  --r: 191;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified025.png");
+}
+
+.image-026 {
+  /* STATIC */
+  --c: 8;
+  --w: 2;
+  --r: 84;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified026.png");
+}
+
+.image-027 {
+  /* STATIC */
+  --c: 9;
+  --w: 2;
+  --r: 17;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified027.png");
+}
+
+.image-028 {
+  /* SCROLL */
+  --c: 1;
+  --w: 2;
+  --r: 202;
+  --end-r: 280;
+  --sticky-line: 202;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified028.png");
+}
+
+.image-029 {
+  /* STATIC */
+  --c: 9;
+  --w: 3;
+  --r: 38;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified029.png");
+}
+
+.image-030 {
+  /* STATIC */
+  --c: 10;
+  --w: 3;
+  --r: 71;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified030.png");
+}
+
+/* ---------------- PARTIE 3 ---------------- */
+
+.image-031 {
+  /* SCROLL */
+  --c: 1;
+  --w: 2;
+  --r: 1;
+  --end-r: 316;
+  --sticky-line: 1;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified031.png");
+}
+
+.image-032 {
+  /* STATIC */
+  --c: 2;
+  --w: 3;
+  --r: 114;
+  --end-r: 36;
+  --sticky-line: 1;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified032.png");
+}
+
+.image-033 {
+  /* STATIC */
+  --c: 5;
+  --w: 2;
+  --r: 1;
+  --end-r: 316;
+  --sticky-line: 1;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified033.png");
+}
+
+.image-034 {
+  /* STATIC */
+  --c: 7;
+  --w: 2;
+  --r: 1;
+  --end-r: 36;
+  --sticky-line: 1;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified034.png");
+}
+
+.image-035 {
+  /* SCROLL */
+  --c: 5;
+  --w: 2;
+  --r: 48;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified035.png");
+}
+
+.image-036 {
+  /* STATIC */
+  --c: 3;
+  --w: 2;
+  --r: 286;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified036.png");
+}
+
+.image-037 {
+  /* SCROLL */
+  --c: 1;
+  --w: 2;
+  --r: 15;
+  --end-r: 316;
+  --sticky-line: 1;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified037.png");
+}
+
+.image-038 {
+  /* STATIC */
+  --c: 9;
+  --w: 4;
+  --r: 176;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified038.png");
+}
+
+.image-039 {
+  /* SCROLL */
+  --c: 7;
+  --w: 4;
+  --r: 17;
+  --end-r: 280;
+  --sticky-line: 2;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified039.png");
+}
+
+.image-040 {
+  /* STATIC */
+  --c: 1;
+  --w: 2;
+  --r: 211;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified040.png");
+}
+
+.image-041 {
+  /* STATIC */
+  --c: 1;
+  --w: 2;
+  --r: 3;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified041.png");
+}
+
+.image-042 {
+  /* STATIC */
+  --c: 7;
+  --w: 2;
+  --r: 81;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified042.png");
+}
+
+.image-043 {
+  /* SCROLL */
+  --c: 9;
+  --w: 2;
+  --r: 81;
+  --end-r: 230;
+  --sticky-line: 11;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified043.png");
+}
+
+.image-044 {
+  /* SCROLL */
+  --c: 3;
+  --w: 2;
+  --r: 48;
+  --end-r: 250;
+  --sticky-line: 13;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified044.png");
+}
+
+.image-045 {
+  /* SCROLL */
+  --c: 5;
+  --w: 2;
+  --r: 15;
+  --end-r: 250;
+  --sticky-line: 1;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified045.png");
+}
+
+/* ---------------- PARTIE 4 ---------------- */
+
+.image-046 {
+  /* STATIC */
+  --c: 1;
+  --w: 2;
+  --r: 55;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified046.png");
+}
+
+.image-047 {
+  /* STATIC */
+  --c: 5;
+  --w: 4;
+  --r: 41;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified047.png");
+}
+
+.image-048 {
+  /* SCROLL */
+  --c: 3;
+  --w: 2;
+  --r: 55;
+  --end-r: 200;
+  --sticky-line: 6;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified048.png");
+}
+
+.image-049 {
+  /* STATIC */
+  --c: 1;
+  --w: 3;
+  --r: 14;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified049.png");
+}
+
+.image-050 {
+  /* SCROLL */
+  --c: 9;
+  --w: 2;
+  --r: 1;
+  --end-r: 316;
+  --sticky-line: 1;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified050.png");
+}
+
+.image-051 {
+  /* STATIC */
+  --c: 1;
+  --w: 1;
+  --r: 41;
+  --end-r: 193;
+  --sticky-line: 6;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified051.png");
+}
+
+.image-052 {
+  /* STATIC */
+  --c: 1;
+  --w: 2;
+  --r: 78;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified052.png");
+}
+
+.image-053 {
+  /* STATIC */
+  --c: 7;
+  --w: 3;
+  --r: 79;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified053.png");
+}
+
+.image-054 {
+  /* SCROLL */
+  --c: 1;
+  --w: 3;
+  --r: 1;
+  --end-r: 40;
+  --sticky-line: 1;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified054.png");
+}
+
+.image-055 {
+  /* STATIC */
+  --c: 2;
+  --w: 2;
+  --r: 116;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified055.png");
+}
+
+.image-056 {
+  /* SCROLL */
+  --c: 5;
+  --w: 2;
+  --r: 300;
+  --end-r: 316;
+  --sticky-line: 300;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified056.png");
+}
+
+.image-057 {
+  /* SCROLL */
+  --c: 11;
+  --w: 2;
+  --r: 127;
+  --end-r: 316;
+  --sticky-line: 22;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified057.png");
+}
+
+.image-058 {
+  /* SCROLL */
+  --c: 1;
+  --w: 2;
+  --r: 300;
+  --end-r: 316;
+  --sticky-line: 300;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified058.png");
+}
+
+.image-059 {
+  /* STATIC */
+  --c: 1;
+  --w: 3;
+  --r: 1;
+
+  --image-color: var(--ink);
+  --image-mask: url("../images/echos_links_modified059.png");
+}
+
+/* ============================================================
+   LONGUEUR DU SCROLL COMMUN PAR PARTIE
+   ============================================================
 
 
-      <!-- CHIMÈRES — description -->
-      <div
-        class="intro-text-track"
-        style="
-          --c: 8;
-          --w: 3;
-          --r: 39;
-          --end-r: 123;
-          --sticky-line: 23;
-        "
-      >
-        <p class="intro-part-text intro-part-3-text">
-          Les voix du&nbsp;passé murmurent dans les entrailles de&nbsp;la&nbsp;terre, m’invitant a&nbsp;écouter la&nbsp;symphonie des révélations enfouies.
-        </p>
-      </div>
+   Cette valeur indique combien de lignes contient le scroller
+   commun de la partie.
 
-      <!-- CHIMÈRES — titre -->
-      <div
-        class="intro-text-track"
-        style="
-          --c: 6;
-          --w: 2;
-          --r: 39;
-          --end-r: 123;
-          --sticky-line: 25;
-        "
-      >
-        <p class="intro-part-title intro-part-3-title">
-          CHIMÈRES
-        </p>
-      </div>
+   Tu peux la modifier indépendamment pour chaque partie.
+   Elle doit simplement être supérieure aux --end-r utilisés
+   par les images qu'elle contient.
+   ============================================================ */
+
+.part--1 .images-scroll-grid {
+  --images-scroll-rows: 315;
+}
+
+.part--2 .images-scroll-grid {
+  --images-scroll-rows: 315;
+}
+
+.part--3 .images-scroll-grid {
+  --images-scroll-rows: 315;
+}
+
+.part--4 .images-scroll-grid {
+  --images-scroll-rows: 315;
+}
+
+/* PARTIE 2 : ajoute ici les .image-... placées dans sa zone */
+/* PARTIE 3 : ajoute ici les .image-... placées dans sa zone */
+/* PARTIE 4 : ajoute ici les .image-... placées dans sa zone */
 
 
-      <!-- EXTASE — description -->
-      <div
-        class="intro-text-track"
-        style="
-          --c: 10;
-          --w: 3;
-          --r: 39;
-          --end-r: 124;
-          --sticky-line: 23;
-        "
-      >
-        <p class="intro-part-text intro-part-4-text">
-          À&nbsp;mesure que l’exploration s’intensifie, une énergie mystérieuse émane des murs, annoncant l’aube des révélations et&nbsp;la&nbsp;fin de&nbsp;la&nbsp;quête.
-        </p>
-      </div>
-
-      <!-- EXTASE — titre -->
-      <div
-        class="intro-text-track"
-        style="
-          --c: 8;
-          --w: 2;
-          --r: 39;
-          --end-r: 123;
-          --sticky-line: 25;
-        "
-      >
-        <p class="intro-part-title intro-part-4-title">
-          EXTASE
-        </p>
-      </div>
+/* ============================================================
+   INDEX — INTRODUCTION
+   ============================================================ */
 
 
-      <!-- ====================================================
-           TEXTE INTRODUCTIF
-           ==================================================== -->
-    <section class="intro-project-panel">
+/* ------------------------------------------------------------
+   SCROLLER DE L'INDEX
+------------------------------------------------------------ */
 
-      <div
-        class="intro-project-track"
-        style="
-          --c: 3;
-          --w: 4;
-          --r: 108;
-          --end-r: 160;
-          --sticky-line: 29;
-          text-indent: -16.66vw;
-        "
-      >
-        <div class="intro-project-text">
+.index-body .intro-scroll {
+  position: fixed;
+  inset: 0;
 
-          <p>
-            Il&nbsp;ère dans un&nbsp;espace inconnu, il&nbsp;n'en&nbsp;perçoit ni&nbsp;les limites ni&nbsp;l’origine. Progressivement, les distances deviennent incertaines, les sons se&nbsp;confondent, les souvenirs se&nbsp;mêlent au&nbsp;présent, tous ses repères s’effacent.
-          </p>
-        </div>
-      </div>
+  width: 100vw;
+  height: 100vh;
 
-      <div
-        class="intro-project-track"
-        style="
-          --c: 8;
-          --w: 4;
-          --r: 106;
-          --end-r: 160;
-          --sticky-line: 27;
-          text-indent: -16.66vw;
-        "
-      >
-        <div class="intro-project-text">
+  overflow-x: hidden;
+  overflow-y: auto;
 
-          <p>
-            [E[EC[ECHOS]OS]S] se&nbsp;parcourt comme cette errance. Ici, il&nbsp;n'y&nbsp;a&nbsp;pas de&nbsp;chemin. Certains mots ouvrent des passages vers d’autres fragments, d’autres instants ou&nbsp;d'autres espaces.
-          </p>
-        </div>
-      </div>
+  overscroll-behavior-x: none;
 
-      <div
-        class="intro-project-track"
-        style="
-          --c: 10;
-          --w: 4;
-          --r: 111;
-          --end-r: 160;
-          --sticky-line: 32;
-          text-indent: -16.66vw;
-        "
-      >
-        <div class="intro-project-text">
+  background: var(--paper);
 
-          <p>
-            Lire c'est se&nbsp;perdre.
-          </p>
+  scrollbar-width: none;
 
-        </div>
-      </div>
+  /*
+   * Timeline CSS utilisée pour faire varier les opacités
+   * en fonction de la position réelle du scroll.
+   */
+  scroll-timeline-name: --intro-scroll;
+  scroll-timeline-axis: block;
+}
 
-    </section>
+.index-body .intro-scroll::-webkit-scrollbar {
+  display: none;
+}
 
 
-      <!-- ====================================================
-           LIEN VERS LE COLOPHON 
-           ==================================================== -->
-      <div
-        class="intro-colophon-track"
-        style="
-          --c: 8;
-          --w: 2;
-          --r: 114;
-          --end-r: 160;
-          --sticky-line: 34;
-        "
-      >
-        <a class="intro-colophon-link" href="colophon.html">
-          Colophon
-        </a>
-      </div>
+/* ------------------------------------------------------------
+   GRANDE GRILLE DE L'INDEX
+------------------------------------------------------------ */
 
-    </main>
-</div>
+.index-body .intro-map {
+  --intro-map-rows: 145;
 
-</body>
-</html>
+  box-sizing: border-box;
+
+  width: 100vw;
+  min-height: calc(
+    var(--page-top) + var(--intro-map-rows) * var(--baseline)
+  );
+
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-rows: repeat(
+    var(--intro-map-rows),
+    var(--baseline)
+  );
+
+  column-gap: var(--grid-gap);
+  row-gap: 0;
+
+  padding: var(--page-top) var(--page-side) 0;
+
+  margin: 0;
+
+  position: relative;
+
+  background: var(--paper);
+}
+
+
+/* ------------------------------------------------------------
+   TITRE
+------------------------------------------------------------ */
+
+.index-body .intro-title {
+  position: fixed;
+
+  top: 50%;
+  left: 50%;
+
+  transform: translate(-50%, -50%);
+
+  margin: 0;
+
+  z-index: 30;
+
+  white-space: nowrap;
+
+  font-family: JolyText-RegularItalic;
+  font-size: var(--type-size);
+  font-weight: normal;
+  line-height: 1;
+
+  color: var(--link);
+
+  -webkit-text-stroke: 0;
+
+  pointer-events: none;
+}
+
+
+/* ============================================================
+   TRACKS DES IMAGES
+   ============================================================ */
+
+.index-body .intro-image-track {
+  grid-column: var(--c) / span var(--w);
+  grid-row: var(--r) / var(--end-r);
+
+  align-self: stretch;
+
+  position: relative;
+  z-index: 10;
+
+  min-width: 0;
+  min-height: 0;
+}
+
+
+/* ------------------------------------------------------------
+   ÉLÉMENT STICKY DE L'IMAGE
+------------------------------------------------------------ */
+
+.index-body .intro-image-link {
+  display: block;
+
+  position: sticky;
+
+  top: calc(
+    var(--page-top) + (var(--sticky-line) - 1) * var(--baseline)
+  );
+
+  width: 100%;
+
+  color: inherit;
+  text-decoration: none;
+
+  cursor: url("cursor-hover.svg") 12 10, pointer;
+}
+
+
+/* ------------------------------------------------------------
+   IMAGE BICHROME
+------------------------------------------------------------ */
+
+.index-body .intro-image-block {
+  box-sizing: border-box;
+
+  position: relative;
+
+  width: 100%;
+  min-width: 0;
+
+  background: var(--image-bg);
+
+  transition:
+    background-color 0.25s ease,
+    opacity 0.25s ease;
+}
+
+.index-body .intro-image-ratio {
+  display: block;
+
+  width: 100%;
+  height: auto;
+
+  visibility: hidden;
+}
+
+.index-body .intro-image-block::after {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  background: var(--image-color);
+
+  -webkit-mask-image: var(--image-mask);
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+
+  mask-image: var(--image-mask);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+
+  transition: background-color 0.25s ease;
+}
+
+
+/* ------------------------------------------------------------
+   CHANGEMENT DE COULEUR DE L'IMAGE AU SURVOL
+------------------------------------------------------------ */
+
+.index-body .intro-image-track:hover .intro-image-block,
+.index-body .intro-image-track:focus-within .intro-image-block {
+  background: var(--image-bg-hover);
+}
+
+.index-body .intro-image-track:hover .intro-image-block::after,
+.index-body .intro-image-track:focus-within .intro-image-block::after {
+  background: var(--image-color-hover);
+}
+
+
+
+/* ============================================================
+   TEXTES DES PARTIES — TRACKS SCROLLABLES + STICKY
+   ============================================================
+
+   Même principe que les images :
+
+   --c           = colonne de départ
+   --w           = largeur en colonnes
+   --r           = début du track
+   --end-r       = fin du track
+   --sticky-line = ligne du viewport où le texte se bloque
+   ============================================================ */
+
+.index-body .intro-text-track {
+  grid-column: var(--c) / span var(--w);
+  grid-row: var(--r) / var(--end-r);
+
+  align-self: stretch;
+
+  position: relative;
+  z-index: 20;
+
+  min-width: 0;
+  min-height: 0;
+
+  pointer-events: none;
+}
+
+
+/* ------------------------------------------------------------
+   DESCRIPTION + TITRE : ÉLÉMENTS STICKY
+------------------------------------------------------------ */
+
+.index-body .intro-part-text,
+.index-body .intro-part-title {
+  box-sizing: border-box;
+
+  position: sticky;
+
+  top: calc(
+    var(--page-top) + (var(--sticky-line) - 1) * var(--baseline)
+  );
+
+  width: 100%;
+  min-width: 0;
+
+  margin: 0;
+
+  font-size: var(--type-size);
+  line-height: var(--type-leading);
+
+  transform: translateY(
+    calc(-1 * var(--baseline-shift))
+  );
+
+  opacity: 0;
+
+  transition: opacity 0.25s ease;
+}
+
+.index-body .intro-part-text {
+  font-family: JolyText-Regular;
+  text-indent: -16.66vw;
+  color: var(--ink);
+}
+
+.index-body .intro-part-title {
+  font-family: JolyText-RegularItalic;
+  color: var(--link);
+}
+
+
+/* ------------------------------------------------------------
+   IMAGE 1 -> TEXTE RÊVERIES
+------------------------------------------------------------ */
+
+.index-body .intro-scroll:has(.intro-image-track--1:hover)
+.intro-part-1-text,
+.index-body .intro-scroll:has(.intro-image-track--1:hover)
+.intro-part-1-title,
+.index-body .intro-scroll:has(.intro-image-track--1:focus-within)
+.intro-part-1-text,
+.index-body .intro-scroll:has(.intro-image-track--1:focus-within)
+.intro-part-1-title {
+  opacity: 1;
+}
+
+
+/* ------------------------------------------------------------
+   IMAGE 2 -> TEXTE MIRAGE
+------------------------------------------------------------ */
+
+.index-body .intro-scroll:has(.intro-image-track--2:hover)
+.intro-part-2-text,
+.index-body .intro-scroll:has(.intro-image-track--2:hover)
+.intro-part-2-title,
+.index-body .intro-scroll:has(.intro-image-track--2:focus-within)
+.intro-part-2-text,
+.index-body .intro-scroll:has(.intro-image-track--2:focus-within)
+.intro-part-2-title {
+  opacity: 1;
+}
+
+
+/* ------------------------------------------------------------
+   IMAGE 3 -> TEXTE CHIMÈRES
+------------------------------------------------------------ */
+
+.index-body .intro-scroll:has(.intro-image-track--3:hover)
+.intro-part-3-text,
+.index-body .intro-scroll:has(.intro-image-track--3:hover)
+.intro-part-3-title,
+.index-body .intro-scroll:has(.intro-image-track--3:focus-within)
+.intro-part-3-text,
+.index-body .intro-scroll:has(.intro-image-track--3:focus-within)
+.intro-part-3-title {
+  opacity: 1;
+}
+
+
+/* ------------------------------------------------------------
+   IMAGE 4 -> TEXTE EXTASE
+------------------------------------------------------------ */
+
+.index-body .intro-scroll:has(.intro-image-track--4:hover)
+.intro-part-4-text,
+.index-body .intro-scroll:has(.intro-image-track--4:hover)
+.intro-part-4-title,
+.index-body .intro-scroll:has(.intro-image-track--4:focus-within)
+.intro-part-4-text,
+.index-body .intro-scroll:has(.intro-image-track--4:focus-within)
+.intro-part-4-title {
+  opacity: 1;
+}
+
+
+/* ============================================================
+   PRÉSENTATION GLOBALE DU PROJET — TRACK STICKY
+   ============================================================
+
+   Le bloc est maintenant un enfant DIRECT de .intro-map.
+   Les variables --c / --w / --r fonctionnent donc réellement
+   sur la même grille que les images.
+   ============================================================ */
+
+.index-body .intro-project-panel {
+  display: contents;
+}
+
+.index-body .intro-project-track {
+  grid-column: var(--c) / span var(--w);
+  grid-row: var(--r) / var(--end-r);
+
+  align-self: stretch;
+
+  position: relative;
+  z-index: 5;
+
+  min-width: 0;
+  min-height: 0;
+}
+
+.index-body .intro-project-text {
+  box-sizing: border-box;
+
+  position: sticky;
+
+  top: calc(
+    var(--page-top) + (var(--sticky-line) - 1) * var(--baseline)
+  );
+
+  width: 100%;
+  min-width: 0;
+
+  font-family: JolyText-Regular;
+  font-size: var(--type-size);
+  line-height: var(--type-leading);
+
+  color: var(--ink);
+
+  transform: translateY(
+    calc(-1 * var(--baseline-shift))
+  );
+}
+
+.index-body .intro-project-text p {
+  margin: 0 0 var(--baseline) 0;
+}
+
+.index-body .intro-project-text p:last-child {
+  margin-bottom: 0;
+}
+
+
+/* ------------------------------------------------------------
+   ACCESSIBILITÉ : réduction des animations
+------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .index-body .intro-image-track,
+  .index-body .intro-text-track,
+  .index-body .intro-project-track {
+    animation: none;
+  }
+}
+
+
+/* ============================================================
+   INDEX — LIEN VERS LE COLOPHON
+   ============================================================
+
+   Même système de positionnement que les images et les textes :
+
+   --c           = colonne
+   --w           = largeur en colonnes
+   --r           = début du track
+   --end-r       = fin du track
+   --sticky-line = ligne où le lien se bloque
+   ============================================================ */
+
+.index-body .intro-colophon-track {
+  grid-column: var(--c) / span var(--w);
+  grid-row: var(--r) / var(--end-r);
+
+  align-self: stretch;
+
+  position: relative;
+  z-index: 5;
+
+  min-width: 0;
+  min-height: 0;
+}
+
+.index-body .intro-colophon-link {
+  display: block;
+
+  position: sticky;
+
+  top: calc(
+    var(--page-top) + (var(--sticky-line) - 1) * var(--baseline)
+  );
+
+  width: 100%;
+  min-width: 0;
+
+  margin: 0;
+
+  font-family: JolyText-RegularItalic;
+  font-size: var(--type-size);
+  line-height: var(--type-leading);
+
+  color: var(--link);
+  text-decoration: none;
+
+  transform: translateY(
+    calc(-1 * var(--baseline-shift))
+  );
+
+  cursor: url("cursor-hover.svg") 12 10, pointer;
+
+  transition:
+    filter 0.6s ease,
+    opacity 0.6s ease,
+    text-shadow 0.6s ease;
+}
+
+.index-body .intro-colophon-link:visited,
+.index-body .intro-colophon-link:active {
+  color: var(--link);
+}
+
+.index-body .intro-colophon-link:hover {
+  color: var(--link);
+
+  filter: blur(var(--hover-blur));
+  opacity: 0.45;
+
+  text-shadow:
+    -0.12em 0 var(--ink),
+     0.12em 0 var(--ink);
+}
+
+
+
+/* ============================================================
+   COLOPHON
+   ============================================================
+
+   Chaque élément est placé indépendamment avec :
+   --c / --w / --r / --end-r / --sticky-line
+
+   La page utilise la même grille :
+   12 colonnes / 35 lignes visibles par écran.
+   ============================================================ */
+
+.colophon-body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+
+  background: var(--paper);
+}
+
+.colophon-body .colophon-scroll {
+  position: fixed;
+  inset: 0;
+
+  width: 100vw;
+  height: 100vh;
+
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  overscroll-behavior-x: none;
+
+  background: var(--paper);
+
+  scrollbar-width: none;
+}
+
+.colophon-body .colophon-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+
+/* ------------------------------------------------------------
+   GRANDE GRILLE
+------------------------------------------------------------ */
+
+.colophon-body .colophon-map {
+  --colophon-map-rows: 300;
+
+  box-sizing: border-box;
+
+  width: 100vw;
+
+  min-height: calc(
+    var(--page-top) + var(--colophon-map-rows) * var(--baseline)
+  );
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(12, minmax(0, 1fr));
+
+  grid-template-rows:
+    repeat(
+      var(--colophon-map-rows),
+      var(--baseline)
+    );
+
+  column-gap: var(--grid-gap);
+  row-gap: 0;
+
+  padding: var(--page-top) var(--page-side) 0;
+
+  margin: 0;
+
+  position: relative;
+
+  background: var(--paper);
+}
+
+
+/* ------------------------------------------------------------
+   UN ÉLÉMENT DU COLOPHON
+------------------------------------------------------------ */
+
+.colophon-body .colophon-track {
+  grid-column: var(--c) / span var(--w);
+  grid-row: var(--r) / var(--end-r);
+
+  align-self: stretch;
+  text-indent: -16.66vw;
+
+  position: relative;
+
+  z-index: var(--z, 5);
+
+  min-width: 0;
+  min-height: 0;
+}
+
+
+/* ------------------------------------------------------------
+   CONTENU STICKY
+------------------------------------------------------------ */
+
+.colophon-body .colophon-item {
+  box-sizing: border-box;
+
+  position: sticky;
+
+  top: calc(
+    var(--page-top) + (var(--sticky-line) - 1) * var(--baseline)
+  );
+
+  width: 100%;
+  min-width: 0;
+
+  margin: 0;
+
+  font-family: JolyText-Regular;
+  font-size: var(--type-size);
+  line-height: var(--type-leading);
+
+  color: var(--ink);
+
+  transform: translateY(
+    calc(-1 * var(--baseline-shift))
+  );
+}
+
+.colophon-body .colophon-item p {
+  margin: 0;
+}
+
+.colophon-body .colophon-label {
+  font-family: JolyText-Regular;
+  font-variant: all-small-caps;
+  color: var(--link);
+}
+
+
+/* ------------------------------------------------------------
+   LIENS DU COLOPHON
+------------------------------------------------------------ */
+
+.colophon-body .colophon-link,
+.colophon-body .colophon-link:visited,
+.colophon-body .colophon-link:active {
+  color: var(--link);
+  text-decoration: none;
+
+  font-family: JolyText-RegularItalic;
+
+  cursor: url("cursor-hover.svg") 12 10, pointer;
+
+  transition:
+    filter 0.6s ease,
+    opacity 0.6s ease,
+    text-shadow 0.6s ease;
+}
+
+.colophon-body .colophon-link:hover {
+  filter: blur(var(--hover-blur));
+  opacity: 0.45;
+
+  text-shadow:
+    -0.12em 0 var(--ink),
+     0.12em 0 var(--ink);
+}
+
